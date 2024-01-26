@@ -2,7 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-"""Coffee model"""
 type Coffee {
   id: ID!
   name: String!
@@ -19,7 +18,6 @@ type Mutation {
   createCoffee(createCoffeeInput: CreateCoffeeInput!): Coffee
 }
 
-"""Create coffee input object type."""
 input CreateCoffeeInput {
   name: String!
   brand: String!
