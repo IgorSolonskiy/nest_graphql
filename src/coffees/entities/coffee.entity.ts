@@ -8,10 +8,12 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { Flavor } from './flavor.entity';
+import { Drink } from '../../common/interfaces/drink.interface';
+import { CoffeeType } from '../../common/enums/coffee-type.enum';
 
-@ObjectType()
 @Entity()
-export class Coffee {
+@ObjectType({ implements: () => Drink })
+export class Coffee implements Drink {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
   id: number;
@@ -24,4 +26,7 @@ export class Coffee {
   flavors?: Flavor[];
   @CreateDateColumn()
   createdAt?: Date;
+
+  @Column({ nullable: true })
+  type?: CoffeeType;
 }
