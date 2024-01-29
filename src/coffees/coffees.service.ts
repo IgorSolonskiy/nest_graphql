@@ -5,12 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { UserInputError } from 'apollo-server-express';
 import { UpdateCoffeeInput } from './dto/update-coffee.input';
+import { Flavor } from './entities/flavor.entity';
 
 @Injectable()
 export class CoffeesService {
   constructor(
     @InjectRepository(Coffee)
     private readonly coffeesRepository: Repository<Coffee>,
+    @InjectRepository(Flavor)
+    private readonly flavorsRepository: Repository<Flavor>,
   ) {}
 
   async findAll() {
@@ -26,15 +29,28 @@ export class CoffeesService {
   }
 
   async create(createCoffeeInput: CreateCoffeeInput) {
-    const coffee = this.coffeesRepository.create(createCoffeeInput);
+    const flavors = await Promise.all(
+      createCoffeeInput.flavors.map((name) => this.preloadFlavorByName(name)),
+    );
 
+    const coffee = this.coffeesRepository.create({
+      ...createCoffeeInput,
+      flavors,
+    });
     return this.coffeesRepository.save(coffee);
   }
 
   async update(id: number, updateCoffeeInput: UpdateCoffeeInput) {
+    const flavors =
+      updateCoffeeInput.flavors &&
+      (await Promise.all(
+        updateCoffeeInput.flavors.map((name) => this.preloadFlavorByName(name)),
+      ));
+
     const partialCoffee = {
       id,
       ...updateCoffeeInput,
+      flavors,
     };
 
     const coffee = await this.coffeesRepository.preload(partialCoffee);
@@ -48,5 +64,15 @@ export class CoffeesService {
     const coffee = await this.findOne(id);
 
     return this.coffeesRepository.remove(coffee);
+  }
+
+  private async preloadFlavorByName(name: string): Promise<Flavor> {
+    const existingFlavor = await this.flavorsRepository.findOne({
+      where: { name },
+    });
+
+    if (existingFlavor) return existingFlavor;
+
+    return this.flavorsRepository.create({ name });
   }
 }
